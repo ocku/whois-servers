@@ -1,0 +1,108 @@
+#!/bin/sh
+
+# constants ##################################################################
+# line separated domain names
+# "#" is accepted as a comment and ignored
+DOMAIN_SOURCE="https://data.iana.org/TLD/tlds-alpha-by-domain.txt"
+# directory in which to store our build files
+# this allows us to only release a new version when these files change
+CACHE_DIR=cache
+# a respectful delay in seconds to wait between queries so as to not spam IANA
+RESPECTFUL_DELAY=1
+
+# globals ####################################################################
+# json to output
+json='{}'
+# current domain index
+current=0
+
+# main #######################################################################
+
+mkdir -pv "${CACHE_DIR}"
+
+## fetch #####################################################################
+
+printf "[i] %s\n" "fetching domain list..."
+
+# get the updated domains file
+wget -qO "${CACHE_DIR}/domains.new" "$DOMAIN_SOURCE" || exit 1
+
+# check for changes
+if [ -e "${CACHE_DIR}/domains" ] &&
+  [ -z "$(diff "${CACHE_DIR}/domains.new" "${CACHE_DIR}/domains")" ]; then
+  # if none, then we're up to date
+  printf "[i] %s\n" "no changes"
+  exit 0
+fi
+
+mv "${CACHE_DIR}/domains.new" "${CACHE_DIR}/domains"
+
+total="$(wc -l "${CACHE_DIR}/domains" | cut -d' ' -f1)"
+
+# fetch the whois of all domains in our domain file
+while read -r line; do
+  current="$((current + 1))"
+
+  # skip comments
+  [ "${line##\#*}" ] || continue
+
+  printf "[i] %s" "($current/$total) fetching $line"
+
+  server="$(
+    whois -h whois.iana.org "$line" |
+      grep whois: |
+      tr -d '[:space:]' |
+      cut -d: -f2 2>/dev/null
+  )"
+
+  # some servers come empty
+  if [ -z "$server" ]; then
+    printf " - %s\n" "empty"
+    continue
+  fi
+
+  printf " - %s\n" "ok"
+
+  njson="$(
+    # add the new server to our output
+    printf "%s\n" "$json" |
+      jq \
+        '. + {$domain: $server}' \
+        --arg domain "$(
+          printf "%s\n" "$line" |
+            tr '[:upper:]' '[:lower:]'
+        )" \
+        --arg server "$server"
+  )"
+
+  json="$njson"
+
+  sleep "${RESPECTFUL_DELAY}"
+
+done <"${CACHE_DIR}/domains"
+
+## generation ################################################################
+
+printf "%s\n" "$json" >"${CACHE_DIR}/servers.new.json"
+
+if [ ! -e "${CACHE_DIR}/servers.json" ] ||
+  [ -n "$(
+    diff "${CACHE_DIR}/servers.new.json" "${CACHE_DIR}/servers.json"
+  )" ]; then
+
+  printf "[i] %s\n" "changes pending"
+
+  mv "${CACHE_DIR}/servers.new.json" "${CACHE_DIR}/servers.json"
+
+  printf "[i] %s" "generating modules"
+  printf "module.exports = %s\n" "$json" >lib/index.js
+  printf "export default %s\n" "$json" >lib/index.mjs
+  printf " - %s\n" "done"
+
+  printf "[i] %s\n" "formatting code"
+  yarn prettier
+  yarn version --patch
+  printf "[i] %s\n" "all done"
+else
+  printf "[i] %s\n" "no changes"
+fi
