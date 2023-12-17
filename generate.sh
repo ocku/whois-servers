@@ -25,13 +25,14 @@ mkdir -pv "${CACHE_DIR}"
 printf "[i] %s\n" "fetching domain list..."
 
 # get the updated domains file
-wget -qO "${CACHE_DIR}/domains.new" "$DOMAIN_SOURCE" || exit 1
+wget -qO- "$DOMAIN_SOURCE" | tail -n+2 >"${CACHE_DIR}/domains.new" || exit 1
 
 # check for changes
 if [ -e "${CACHE_DIR}/domains" ] &&
   [ -z "$(diff "${CACHE_DIR}/domains.new" "${CACHE_DIR}/domains")" ]; then
   # if none, then we're up to date
   printf "[i] %s\n" "no changes"
+  rm "${CACHE_DIR}/domains.new"
   exit 0
 fi
 
@@ -104,5 +105,6 @@ if [ ! -e "${CACHE_DIR}/servers.json" ] ||
   yarn version --patch
   printf "[i] %s\n" "all done"
 else
+  rm "${CACHE_DIR}/servers.new.json"
   printf "[i] %s\n" "no changes"
 fi
