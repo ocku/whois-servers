@@ -18,6 +18,14 @@ console.log(servers.arpa); // whois.iana.org
 console.log(servers['xn--tckwe']); // whois.nic.xn--tckwe
 ```
 
+## For any languages other than Node
+
+All JavaScript files are generated from `cache/servers.json`, which contains the original domain:server map. You can download it with:
+
+```sh
+wget https://raw.githubusercontent.com/ocku/whois-servers/main/cache/servers.json
+```
+
 ## Punycode
 
 Punycode TLDs are supported, but to keep overhead low, special Unicode characters are not automatically transcoded to LDH.

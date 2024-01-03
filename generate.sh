@@ -25,18 +25,7 @@ mkdir -pv "${CACHE_DIR}"
 printf "[i] %s\n" "fetching domain list..."
 
 # get the updated domains file
-wget -qO- "$DOMAIN_SOURCE" | tail -n+2 >"${CACHE_DIR}/domains.new" || exit 1
-
-# check for changes
-if [ -e "${CACHE_DIR}/domains" ] &&
-  [ -z "$(diff "${CACHE_DIR}/domains.new" "${CACHE_DIR}/domains")" ]; then
-  # if none, then we're up to date
-  printf "[i] %s\n" "no changes"
-  rm "${CACHE_DIR}/domains.new"
-  exit 0
-fi
-
-mv "${CACHE_DIR}/domains.new" "${CACHE_DIR}/domains"
+wget -qO- "$DOMAIN_SOURCE" | tail -n+2 >"${CACHE_DIR}/domains" || exit 1
 
 total="$(wc -l "${CACHE_DIR}/domains" | cut -d' ' -f1)"
 
