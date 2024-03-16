@@ -1,0 +1,32 @@
+{
+  "name": "@ocku/whois-servers",
+  "version": "1.0.11",
+  "description": "A whois server list compiled weekly from IANA's TLD list.",
+  "main": "lib/index.js",
+  "module": "lib/index.mjs",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "prettier": "find lib/ -type f -print0 | xargs -0 prettier --write"
+  },
+  "keywords": [
+    "whois",
+    "servers",
+    "list",
+    "typescript"
+  ],
+  "author": {
+    "email": "feeling@lost.st",
+    "name": "félix"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ocku/whois-servers.git"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.1"
+  }
+}
