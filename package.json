@@ -1,6 +1,6 @@
 {
   "name": "@ocku/whois-servers",
-  "version": "1.3.1",
+  "version": "1.0.14",
   "description": "A whois server list compiled weekly from IANA's TLD list.",
   "main": "lib/index.js",
   "module": "lib/index.mjs",
